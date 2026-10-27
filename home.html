@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>黑木股份有限公司 - 客戶服務入口</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .kuroki-logo { font-size: 2.5rem; font-weight: 900; color: #005A9E; letter-spacing: 3px; text-align: center; margin-bottom: 0.5rem; }
+    .subtitle { text-align: center; color: #6c757d; margin-bottom: 3rem; }
+    .choice-card { border: none; border-radius: 1rem; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; height: 100%; text-decoration: none; display: block; color: inherit; }
+    .choice-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; text-decoration: none; color: inherit; }
+    .icon-box { width: 80px; height: 80px; background-color: #e9f2fb; color: #005A9E; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; font-weight: bold; }
+    .card-title { font-weight: 700; color: #343a40; text-align: center; }
+    .card-text { text-align: center; color: #6c757d; }
+  </style>
+</head>
+<body>
+
+  <div class="container" style="max-width: 900px;">
+    <div class="kuroki-logo">KUROKI 黑木</div>
+    <div class="subtitle">專業製造・卓越品質 — 請選擇您的服務身分</div>
+
+    <div class="row g-4">
+      <!-- 舊客戶入口 -->
+      <div class="col-md-6">
+        <a href="customer-portal.html" class="card p-4 shadow-sm choice-card">
+          <div class="card-body">
+            <div class="icon-box">🤝</div>
+            <h3 class="card-title mb-3">我是既有客戶</h3>
+            <p class="card-text">
+              透過企業信箱登入，享有專屬快速回購功能<br>
+              查看歷史購買價格與新產品圖面評估
+            </p>
+            <div class="text-center mt-4">
+              <span class="btn btn-outline-primary px-4 rounded-pill">登入專屬平台 →</span>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <!-- 新客戶入口 -->
+      <div class="col-md-6">
+        <!-- 注意：這裡連結到新客戶詢價表單，若您的新客戶表單叫 index.html 就填 index.html -->
+        <a href="index.html" class="card p-4 shadow-sm choice-card">
+          <div class="card-body">
+            <div class="icon-box">✉️</div>
+            <h3 class="card-title mb-3">我是新客戶</h3>
+            <p class="card-text">
+              免登入快速填寫詢價需求表單<br>
+              上傳圖面或提供規格，業務專員將盡快聯繫您
+            </p>
+            <div class="text-center mt-4">
+              <span class="btn btn-primary px-4 rounded-pill" style="background-color: #005A9E; border: none;">填寫詢價單 →</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+    
+    <div class="text-center mt-5 text-muted small">
+      &copy; 2024 黑木股份有限公司 (KUROKI CO., LTD.) All Rights Reserved.
+    </div>
+  </div>
+
+</body>
+</html>
