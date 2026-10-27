@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>黑木股份有限公司 - 企業客戶專屬平台</title>
+  <!-- 引入 Bootstrap 5 樣式 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- 引入 Supabase JS SDK (用於串接資料庫與驗證) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .kuroki-logo {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #005A9E;
+      letter-spacing: 2px;
+    }
+    /* 隱藏區塊的輔助 class */
+    .d-none { display: none !important; }
+    
+    /* 儀表板卡片樣式 */
+    .dashboard-card {
+      border: none;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border-radius: 0.5rem;
+    }
+    .table th { background-color: #005A9E; color: white; }
+    .status-expired { color: #dc3545; font-weight: bold; font-size: 0.9em; }
+    .status-valid { color: #198754; font-weight: bold; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================
+       區塊一：登入驗證區 (Login Section)
+       ========================================== -->
+  <div id="loginSection" class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+    <div class="card p-4 shadow-sm" style="width: 100%; max-width: 400px; border-radius: 1rem;">
+      <div class="text-center mb-4">
+        <div class="kuroki-logo">KUROKI 黑木</div>
+        <h5 class="mt-2 text-muted">企業客戶登入 (OTP)</h5>
+      </div>
+
+      <!-- 步驟 1：輸入信箱 -->
+      <div id="step1-email">
+        <div class="mb-3">
+          <label class="form-label">請輸入您的企業登記信箱</label>
+          <input type="email" id="loginEmail" class="form-control" placeholder="name@company.com" required>
+        </div>
+        <button class="btn btn-primary w-100" style="background-color: #005A9E; border: none;" onclick="sendOTP()">發送驗證碼</button>
+        <div class="form-text mt-2 text-center">系統將發送 6 位數驗證碼至您的信箱。</div>
+      </div>
+
+      <!-- 步驟 2：輸入 OTP 驗證碼 (預設隱藏) -->
+      <div id="step2-otp" class="d-none">
+        <div class="alert alert-success small">驗證碼已發送！請檢查信箱 (含垃圾信件匣)。</div>
+        <div class="mb-3">
+          <label class="form-label">6 位數驗證碼</label>
+          <input type="text" id="loginOtp" class="form-control text-center" placeholder="000000" maxlength="6" style="font-size: 1.5rem; letter-spacing: 5px;">
+        </div>
+        <button class="btn btn-success w-100" onclick="verifyOTP()">驗證並登入</button>
+        <button class="btn btn-link w-100 mt-2 text-muted text-decoration-none" onclick="location.reload()">重新輸入信箱</button>
+      </div>
+      
+      <div id="loginMsg" class="mt-3 text-danger text-center small"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       區塊二：登入後的專屬儀表板 (Dashboard Section)
+       預設隱藏
+       ========================================== -->
+  <div id="dashboardSection" class="d-none">
+    
+    <!-- 頂部導覽列 -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #005A9E;">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">KUROKI 客戶專區</a>
+        <div class="d-flex text-white align-items-center">
+          <span id="userGreeting" class="me-3">歡迎，某某公司</span>
+          <button class="btn btn-outline-light btn-sm" onclick="logout()">登出</button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <!-- 標籤頁切換 (Tab Navigation) -->
+      <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-bold" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">歷史購買紀錄與快速回購</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-bold" id="newquote-tab" data-bs-toggle="tab" data-bs-target="#newquote" type="button" role="tab">新產品詢價 (自訂需求)</button>
+        </li>
+      </ul>
+
+      <!-- 標籤頁內容 -->
+      <div class="tab-content" id="myTabContent">
+        
+        <!-- 分頁一：歷史購買紀錄 (需求 10-1, 3-5) -->
+        <div class="tab-pane fade show active" id="history" role="tabpanel">
+          <div class="card dashboard-card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>出貨單號 (項次)</th>
+                      <th>產品料號</th>
+                      <th>產品名稱</th>
+                      <th>最近購買日</th>
+                      <th>最後單價</th>
+                      <th>價格狀態</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyTableBody">
+                    <!-- 這裡的資料未來會從 Supabase 動態載入，目前用假資料示意排版 -->
+                    <tr>
+                      <td>SH-20231015 (1)</td>
+                      <td>1020101011500033</td>
+                      <td>銅管內包膠 黑色</td>
+                      <td>2023-10-15</td>
+                      <td>$ 1,200</td>
+                      <td><span class="status-expired">價格失效, 請重新詢價</span></td>
+                      <td><button class="btn btn-sm btn-outline-primary">帶入詢價單</button></td>
+                    </tr>
+                    <tr>
+                      <td>SH-20231201 (3)</td>
+                      <td>1020202022000044</td>
+                      <td>聚氨酯刮刀 標準型</td>
+                      <td>2023-12-01</td>
+                      <td>$ 850</td>
+                      <td><span class="status-valid">價格有效 (90天內)</span></td>
+                      <td><button class="btn btn-sm btn-success">一鍵回購</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分頁二：新產品詢價 (需求 10-2) -->
+        <div class="tab-pane fade" id="newquote" role="tabpanel">
+          <div class="card dashboard-card">
+            <div class="card-body">
+              <h5 class="card-title text-primary mb-3">提出新產品詢價需求</h5>
+              <form onsubmit="event.preventDefault(); alert('新詢價已送出，業務將盡快聯繫您！');">
+                <div class="mb-3">
+                  <label class="form-label">產品大類別</label>
+                  <select class="form-select" required>
+                    <option value="包膠">包膠</option>
+                    <option value="刮刀">刮刀</option>
+                    <option value="全膠">全膠</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">自訂需求說明</label>
+                  <textarea class="form-control" rows="4" placeholder="請描述您的特殊材質、應用場景或預期尺寸..." required></textarea>
+                </div>
+                <div class="mb-3 p-3 bg-light border rounded">
+                  <label class="form-label d-block fw-bold">新產品必須附上圖面</label>
+                  <div class="form-check form-check-inline mb-2">
+                    <input class="form-check-input" type="radio" name="drawOption" id="drawUpload" checked onchange="document.getElementById('uploadDiv').style.display='block'">
+                    <label class="form-check-label" for="drawUpload">自行上傳圖面 (PDF/CAD)</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="drawOption" id="drawKuroki" onchange="document.getElementById('uploadDiv').style.display='none'">
+                    <label class="form-check-label" for="drawKuroki">需由黑木代為出圖</label>
+                  </div>
+                  <div id="uploadDiv" class="mt-2">
+                    <input type="file" class="form-control">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary px-4">送出需求</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 引入 Bootstrap JS (用於標籤頁切換) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // ==========================================
+    // 介面切換邏輯 (測試用，未正式連線資料庫前可點擊體驗)
+    // ==========================================
+
+    function sendOTP() {
+      const email = document.getElementById('loginEmail').value;
+      if (!email || !email.includes('@')) {
+        document.getElementById('loginMsg').innerText = "請輸入有效的信箱格式";
+        return;
+      }
+      
+      // 隱藏步驟一，顯示步驟二
+      document.getElementById('step1-email').classList.add('d-none');
+      document.getElementById('step2-otp').classList.remove('d-none');
+      document.getElementById('loginMsg').innerText = "";
+      
+      // 未來在此處呼叫 Supabase API：supabase.auth.signInWithOtp({ email })
+    }
+
+    function verifyOTP() {
+      const otp = document.getElementById('loginOtp').value;
+      if (otp.length !== 6) {
+        document.getElementById('loginMsg').innerText = "請輸入完整的 6 位數驗證碼";
+        return;
+      }
+
+      // 模擬登入成功：隱藏登入區塊，顯示儀表板
+      document.getElementById('loginSection').classList.add('d-none');
+      document.getElementById('dashboardSection').classList.remove('d-none');
+      
+      // 帶入假資料的帳號名稱
+      document.getElementById('userGreeting').innerText = `歡迎，${document.getElementById('loginEmail').value} 的代表`;
+
+      // 未來在此處呼叫 Supabase API：supabase.auth.verifyOtp({ email, token: otp, type: 'magiclink' })
+    }
+
+    function logout() {
+      // 模擬登出：重新載入網頁
+      location.reload();
+      // 未來在此處呼叫 Supabase API：supabase.auth.signOut()
+    }
+  </script>
+</body>
+</html>
